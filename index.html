@@ -1,21 +1,737 @@
----
-layout: default
----
 
-<div class="blog-index">
-  {% assign index = true %}
-  {% for post in paginator.posts %}
-  {% assign content = post.content %}
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>tl;drsaurik</title>
+  <meta name="author" content="tl;drsaurik">
+
+  
+  <meta name="description" content="Normally, I get to write articles (or give talks, or leave many-page long comments on various websites and forums) on interesting aspects of &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://tldrsaurik.com">
+  <link href="/favicon.ico" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="tl;drsaurik" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href='//fonts.googleapis.com/css?family=Sintony' rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+  
+
+</head>
+
+<body   >
+  <nav role="navigation">
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:tldrsaurik.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Type to Search"/>
+  </fieldset>
+</form>
+  
+
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <header role="banner"><div class='hero'>
+	<div class='wrap'>
+	  <h1><a href="/">tl;dr<span style="color: #aaa;">saurik</span></a></h1>
+	  
+	    <h2>Everyone&#8217;s favorite essay writer in bite-size format.</h2>
+	  
+	</div>
+</div>
+
+</header>
+
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
     <article>
-      {% include article.html %}
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/04/01/where-did-my-ios-6-tss-data-go/">Where Did My iOS 6 TSS Data Go?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-04-01T07:10:00+00:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class="original">
+Normally, I get to write articles (or give talks, or leave many-page long comments on various websites and forums) on interesting aspects of technology, confusing aspects of business, protocols and the people who standardized them, or new tools that I&#8217;ve been working on; writing these articles can be grueling at times, but at some level the task is not just rewarding, but fun.
+
+Sadly, that is not why I have been working on this article: instead, I am here to be the bearer of bad news that will likely cause me to get a ton of hatemail. :( Specifically, I am writing this to tell everyone that the TSS data Cydia saved for iOS 6.0-6.1.2 is unusable. I&#8217;m also going to attempt to explain some background on the process, what the mistake was, and what users can now do instead.
+
+In the process, I am going to explain a few parts of the iOS software security mechanism that I have not seen described often outside of technical presentations at security conferences. Additionally, I will summarize, from the perspective of a user, what is currently possible with cached APTicket information (something I actually did not know much about before writing this).
+
+My goal is that by the end of this article readers will understand enough of the process to appreciate the mistake, the history of the issue, and why it was never caught. Additionally, it will hopefully be slightly more clear when cached APTicket information is usable (as it turns out that cached APTickets have a rather narrow range of uses) and how affected users might still be able to get this data.
+
+(For those who don&#8217;t care about the long explanation below: the only devices where saved iOS 6 APTickets are actually ever useful are the iPhone 3G[S], iPhone 4, and the 4th generation iPod touch; on these devices, users can, and probably &#8220;should&#8221;, save the APTicket that is currently allowing their device to boot. This can be done with a tool that can dump this information using the limera1n bootrom exploit, such as redsn0w or iFaith, and upload the replacement to Cydia.)
+</div>
+
+
+
+
+<div class="tldr">
+Apparently no one noticed but the blobs from iOS 6.0-6.1.2 saved by Cydia are broken. In the following few sentences, I’ll explain what blobs and shit like that are and what it can possibly mean for us all.
+</div>
+
+
+<h2>What is TSS?</h2>
+
+<div class="original">
+One aspect of maintaining a &#8220;secure&#8221; system is to verify that the software that is installed on it is the software that you were expecting. This is done by using cryptographic &#8220;signatures&#8221; that can demonstrate the authenticity of a block of data, such as the operating system running on a device such as an iPhone. Apple &#8220;signs&#8221; all of the software that they put on an iPhone.
+
+As the device boots up, each step verifies the signature of the next step before moving onwards. Assuming that each step works correctly, you can then feel safe that the entire system is running the software that it was intended to run, with no modifications that might do things you don&#8217;t want (whether it be actual malware, or adding cool features that you didn&#8217;t authorize).
+
+Of course, that assumption is unrealistic for a system as complex as the iPhone: there are many bugs, large and small, that allow attackers to bypass various checks. Particulary tricky attacks can allow for things like evasi0n: an &#8220;untethered jailbreak&#8221;, where the software has been permanently modified in a way that will persist across reboots, re-attacking exploits each boot.
+
+Therefore, one has to plan how bug fixes will be rolled out and required: it isn&#8217;t sufficient to just sign software, as once a bug is found, users could always just downgrade to that known buggy version, take control, and then potentially work their way back up; certainly, though, even if they are stuck at the old version, that may already be a sufficiently costly loss.
+
+The way vendors typically solve this is by having restrictions past just &#8220;valid signature&#8221; when new software is installed: the most common being &#8220;the software being installed must not be older than the software it is replacing, either by checking a version number or an encoded date (which is, really, just another way of encoding a version number)&#8221;. Most systems use this scheme.
+
+Apple, however, decided that this wasn&#8217;t sufficient, as this allows one to actively maintain a device effectively at an old version for a long time. Additionally, it means that if you have a device you haven&#8217;t used in a very long time, and many software revisions have been released between then and now, you could choose to upgrade to any of those versions, not just the latest.
+
+Apple&#8217;s solution to this, which they deployed with iOS 3.x (iOS 2.x was signed, but had no downgrade protections at all), was to have every single installation of the operating system verify, at that moment over the Internet, that the version of the software being installed is &#8220;the one we intended to allow you to install&#8221;. The verifier is the Tatsu Signing Server, or &#8220;TSS&#8221;.
+</div>
+
+
+
+
+<div class="tldr">
+Software usually checks itself to see if it’s not hacked. Here is some really irrelevant things about what apple did different. Finally, I explain that TSS is what signs restores and updates, sorta. I actually don’t explain it all too well.
+</div>
+
+
+<h2>What is SHSH?</h2>
+
+<div class="original">
+The important detail of the signing process is then to know exactly what is signed. Over the years, this has changed. The system that I had described a few years ago in a previous article, &#8220;Caching Apple&#8217;s Signature Server&#8221;, involves &#8220;personalizing&#8221; the files that are used as part of the iOS operating system software installation process (which is known as &#8220;restoring&#8221;).
+
+This personalization is done by adding data to each file that is specific to the device on which the software will be installed, and then having the resulting &#8220;personalized&#8221; file be signed again by Apple. (I say signed &#8220;again&#8221;, as the original files distributed by Apple are already signed, but they do not contain this device-specific information and are entirely generic.)
+
+The device-specific information that was used for this process is called, depending on where you find it, the &#8220;unique chip ID&#8221; or the &#8220;ECID&#8221; (an acronym that no one is sure of the meaning behind, but probably means something like &#8220;exclusive chip ID&#8221;). This ECID is a small block of data represented as a number that is unique to every iOS device that Apple has shipped.
+
+This ECID is then sent to Apple, along with the list of files that are being signed. Apple then returns a &#8220;blob&#8221; for each file, which is a block of data that replaces the existing signature on the file with both the personalization information (which is the ECID), sometimes some random data seemingly just &#8220;for good measure&#8221;, as well as a new signature that signs the entire file.
+
+The actual signature inside of this blob is the SHSH, or signature hash (maybe &#8220;signed hash&#8221;; again, no one is really that certain, but we largely agree on &#8220;signature&#8221;). As the ECID of a device never changes, if you can then save the SHSH of a personalized file, you can always use it later to install that file, even if Apple is no longer willing to sign it: we thereby like saving these.
+</div>
+
+
+
+
+<div class="tldr">
+Apple&#8217;s digital signature protocol for iOS restores and updates. SHSH is downloaded from Apple, unique to every device and firmware. Only the latest firmware is signed.
+</div>
+
+
+<h2>How is each SHSH computed?</h2>
+
+<div class="original">
+I now must make a slight detour to describe signatures: the way these work involves something called a &#8220;hash&#8221;; when you &#8220;sign&#8221; a file, you first take a &#8220;hash&#8221; of the file and then &#8220;encrypt&#8221; that hash using an encryption key that only you have (a &#8220;private key&#8221;) but that can be decrypted by a second &#8220;public&#8221; key that you are able to widely distribute ahead of time to anyone who cares.
+
+The result of &#8220;hashing&#8221; is sometimes called a &#8220;digest&#8221; because what a hash effectively does is to make a smaller version of the file. This smaller file is typically a fixed length that is unrelated to the size of the original file: it is instead determined by the choice of hashing algorithm. The algorithm that is used for verifying iOS is SHA-1, which generates a 160-bit digest.
+
+When you are constructing a digest using SHA-1, you can actually do it &#8220;piecemeal&#8221;: you can get part of the data and stop, and then later come back when you have the second part. At any moment, the only data you need is 160-bits of data and the length you have so far hashed. This means that there is an efficient way to &#8220;continue hashing a file from where you left off&#8221; when using SHA-1.
+
+Apple uses this trick to generate its personalized signatures: instead of sending the entire file into the server, or even storing the entire file on the server, requiring it to still run the hashing algorithm on potentially hundreds of megabytes of data, Apple sends only a &#8220;partial digest&#8221; to the server as part of a TSS request, which is then completed by the server and signed with their key.
+
+Finally, inside of an iPhone software (IPSW) update file (which is really just a ZIP file) is a &#8220;build manifest&#8221; that contains a list of filenames and, for each one, its digest (which is the hash of its data, including the signature it has attached to it from Apple) as well as one of these partial digests for the file without the signature block on the end (so it can be completed by TSS).
+
+The personalization process thereby involves taking the build manifest, building a TSS request, sending it to Apple, getting the result, and then modifying each of the files that were listed by replacing the signature section with the blobs returned by TSS. The resulting modified files are sent to the device, which verifies the ECID inside of them, and also validates the signature hash.
+</div>
+
+
+
+
+<div class="tldr">
+Irrelevant magic.
+</div>
+
+
+<h2>Caching Apple&rsquo;s Signature Server</h2>
+
+<div class="original">
+When Apple started doing this, we figured out how it worked, and the course of action was clear: to setup a man-in-the-middle attack on this server that would simply store every single SHSH that was returned for every file of every firmware version for every device owned by all of the people who cared about being able to downgrade (both jailbreakers, and App Store developers who need to test their apps on earlier firmware versions).
+
+I built this system as a service and wrote an article about how the process worked and how it could be used. Initially, the system acted only &#8220;in the middle&#8221;, but it was immediately enhanced to save all of the ECIDs of all of the users in a massive database, so it could go on its own every time Apple released a new firmware version in order to request everyone&#8217;s SHSH information &#8220;en masse&#8221;.
+
+Eventually, though, you end up with so many ECIDs on file that you are trying to request from a number of servers hundreds of thousands of times fewer, that it becomes very obvious how to shut down such an operation. For a couple years now, I have thereby not been able to run the &#8220;man in the middle&#8221; proxy server, nor am I able to provide the service of automatically saving peoples&#8217; SHSH for them.
+
+However, I have still been able to help users automatically get their data stored by having the Cydia application do it &#8220;in the field&#8221;: Cydia requests SHSH blobs from Apple and uploads them to my servers whenever it notices you don&#8217;t have the information stored on my servers. Additionally, I provide an API that allows third-party tools that retrieve and manage the same information to upload it to me for safe keeping.
+</div>
+
+
+
+
+<div class="tldr">
+You man in the middle attack a request and save the file. Also irrelevant, I bring up my server.
+</div>
+
+
+<h2>How did APTicket change things?</h2>
+
+<div class="original">
+When iOS 5 came out, Apple changed the game slightly: SHSH, the system that I had known a lot about and had spent an inordinate amount of my life building (over and over again, due to changing limitations and scale requirements) tools to retrieve and store data for, was on its way out; a new verification scheme called APTicket was clearly setup to replace it entirely in some upcoming device.
+
+The person who then spent a lot of time looking into APTicket was not me: it was actually MuscleNerd, the developer of redsn0w. Additionally, as recently as late September of 2012, at JailbreakCon, I can be heard asking questions from the audience to iH8sn0w about APTickets after his presentation, as all of my knowledge of how they worked was secondhand ;P.
+
+Since then (a few months ago), I spent some time reverse engineering the APTicket verification system, and thereby know some more about it; however, I was mostly concentrating on finding bugs in the certificate parser, and only was looking at a single stage of the bootup process, so I continue to not know everywhere an APTicket is used, or certainly how various devices are affected by their presence.
+
+However, at a high level, what the APTicket is is a single block of data that is signed as a whole and that contains the digest of all of the files that will be used as the device boots. In various ways this is much more efficient than having to personalize each and every single part: you don&#8217;t even need to rewrite the files, as the APTicket can just store the pristine original digest of the files from the IPSW.
+
+Additionally, it drastically reduces the number of signatures that Apple&#8217;s servers need to perform: every time they release a new version of iOS, their requirement that the software must be signed for every specific device requires an immense number of crytographic signatures; the APTicket mechanism reduces the number of signatures they have to calculate by a factor of between 10 and 20 times.
+
+Further, the APTicket has a special quirk: a &#8220;nonce&#8221; (a word with a fairly interesting history) is stored inside of it (meaning that it, too, is signed during the restore process by TSS) that is verified in addition to the ECID. This &#8220;nonce&#8221; is a number that is generated at random during the restore process, and which thereby makes the APTicket specific to every single restore and uncacheable.
+</div>
+
+
+
+
+<div class="tldr">
+This new thing that apple made to make my life miserable. 
+</div>
+
+
+<h2>Caching the Uncacheable</h2>
+
+<div class="original">
+The question then is, if APTickets solve the problems that SHSH had: why do people still save them? One would expect at this point that when Apple introduced APTickets, that all of the work attempting to store and process this data for later use would have stopped. Obviously, this is not the case. There are two things going on here: backwards compatibility and a few implementation mistakes.
+
+First, Apple can&#8217;t just reflash the bootloader on the existing devices that are in the field, and those verify the first step using SHSH. This means that if you have SHSH data stored for that first stage, it doesn&#8217;t matter whether you have an APTicket for the remaining stages or not: you can trick the first stage. If nothing else, this lets you downgrade to iOS versions that did not use APTicket.
+
+Second, this is a complex verification system, involving a lot of little steps; as an example, at some point you have to reset the nonce: if the nonce never changes, then you can save the APTicket data for whatever fixed nonce you have, and it all looks very much like it did back when we only had the ECID to worry about. It is my understanding that this is how MuscleNerd&#8217;s &#8220;re-restore&#8221; trick works.
+
+Taking advantage of these mistakes has allowed for a few interesting tricks, such as allowing people to switch from one version of iOS 5 to another, or allowing the iPad 2 to be downgraded to iOS 5 from iOS 6 (if you have TSS information saved for iOS 4, to use as an intermediary). For more information on how you can use these techniques, users may wish to read the JailbreakQA FAQ entry on SHSH and APTicket.
+</div>
+
+
+
+
+<div class="tldr">
+I don’t know what saurik is trying to convey here.
+</div>
+
+
+<h2>So, what actually is possible?</h2>
+
+<div class="original">
+While I have mentioned a number of interesting tricks, they are mainly related to either old versions of iOS or old devices. With newer devices, APTickets are more deeply ingrained in the bootup process; and with newer versions of iOS, most of the mistakes that had been used have now been fixed. As newer devices never had access to install older versions of iOS, these limitations start overlapping.
+
+In particular, many older devices are subject to an exploit called limera1n, which attacks the first-level bootloader of the device: this is something that Apple can&#8217;t fix, and allows us to bypass or alter everything that comes after it in the bootup sequence. Using this exploit, it is possible to downgrade these exploitable devices to any version for which you have your TSS information saved.
+
+Another opportunity allows you to sidestep the APTicket process by way of iOS 4, which predates the introduction of that feature. This allows devices that have TSS information for both iOS 4 and iOS 5 to downgrade to iOS 4 (even from iOS 6) momentarily and then upgrade to iOS 5. There is only one device, however, where this matters: the iPad 2. Older devices have limera1n, and newer devices did not have iOS 4.
+
+Finally, for devices running iOS 5, we have the ability to restore any other version of iOS 5. This is only relevant on the iPad 2, iPad 3, and the iPhone 4S (as earlier devices are exploitable with limera1n, and later devices came out after iOS 6 and thereby cannot use iOS 5). While the iPad 2 is also the device from the previous category, this can work even if you don&#8217;t have iOS 4 TSS information saved.
+</div>
+
+
+
+
+<div class="tldr">
+Nothing as all exploits are patched and no new ones can exist because memes.
+</div>
+
+
+<h2>What does Cydia&rsquo;s TSS service do?</h2>
+
+<div class="original">
+Moving back for a moment to the service I have provided for storing TSS information, it is important to know that it was designed for SHSH. The reason I built it was to have a concrete way to use saved SHSH blobs: all previous descriptions (including geohot&#8217;s original purplera1n.com, which allowed users to save one critical SHSH blob &#8220;for a purplera1ny day&#8221;), relied on a tool like redsn0w to one day exist.
+
+At the time, however, we did not have such a tool, and thereby needed something &#8220;simpler&#8221;. My idea was to build an implementation of the TSS server, one that could even transparently provide information from Apple by passing requests through, that would be able to save information on its way through and then later replay it when you could no longer make the requests for this information from Apple.
+
+This meant that you could use iTunes itself to perform restores of any version you had ever previously installed by tricking it into connecting to my server instead of Apple&#8217;s server (which we did using &#8220;etc/hosts&#8221; entries, which is easy to configure on both Windows and Mac OS X). I also provided an open-source implementation of TSS that others used to learn from and build local tools and servers.
+
+As you used the server, I also saved your ECID, and would then attempt to request any newer version of iOS on your behalf. Over time, I ended up having tens of millions of ECIDs on file, and had built out infrastructure allowing me to rapidly dump, in parallel, large numbers of SHSH blobs from Apple&#8217;s servers as fast as I could (which in a way was not fast enough, and in a way was too fast for Apple ;P).
+
+Over time, of course, it became impossible to have all of this service centralized, so I began saving the information using Cydia itself, based on an API I setup called &#8220;TSS@home&#8221; (which made more sense in its original incarnation, where devices would download work units and save TSS on behalf of others, but ended up being deployed to Cydia as a feature that saved SHSH only for the running device).
+
+Offering such a service, where data is uploaded by random devices, has a serious problem: you have to deal with people who might be purposely uploading invalid or corrupt blobs. I thereby reached out to MuscleNerd while building TSS@home, who provided to me a sketch of an algorithm that could be used to validate blobs as they were uploaded in the same way that an iPhone would verify them during boot.
+
+At this point, while I had only been trying to distribute the load (both for me and for Apple, as they seemed to have multiple, geographically dispersed servers handling this particular system) of requesting large numbers of SHSH blobs to computers around the world, what I ended up with was a service that allowed users to upload SHSH data, verify that data, and then retrieve it later. The developers of other tools that worked with SHSH thereby reached out to me asking how they could upload blobs.
+</div>
+
+
+
+
+<div class="tldr">
+It caches blobs for you.
+</div>
+
+
+<h2>What about APTicket storage?</h2>
+
+<div class="original">
+When Apple introduced APTicket, the data my server was storing was no longer relevant. However, as part of the process of downloading SHSH information, Apple sends an APTicket as well. I thereby modified my service to also store the APTicket that was downloaded as part of the SHSH collection process (with some further help from MuscleNerd to learn how to validate and refer to APTicket instances ;P).
+
+An additional modification was made to keep Cydia (or any other client using my TSS@home &#8220;check&#8221; API) to not claim that the SHSH information was stored for a particular ECID running a particular version of iOS unless an APTicket was also stored. No real changes were made to the system to make these APTickets happen: they were simply saved as a side effect of the requests that were already being made.
+
+Apparently, this is what people needed, and for something like a year users were very happy with the APTickets that I was saving. As I described earlier, however: I really don&#8217;t know much about APTicket, even now, and thereby have been reliant on the people building the tools that use APTicket to tell me what changes I needed to make, either to the verification process or the requests themselves.
+</div>
+
+
+
+
+<div class="tldr">
+It stores them.
+</div>
+
+
+<h2>So, what is the problem here?</h2>
+
+<div class="original">
+At this point, I think I have described everything I need in order to explain the current situation: all of the APTickets Cydia itself requested from Apple for iOS 6 are useless. The word &#8220;useless&#8221; is important, as it is not accurate to use the word &#8220;corrupt&#8221;: the data that was uploaded was not lost or damaged, and in fact all of the tickets that were stored verified per the algorithm from MuscleNerd.
+
+Instead, the requests being made via Cydia to collect SHSH information for iOS 6 did not result in useful tickets. This is because, in order to better emulate the requests Apple had been making when I first started the service, I filter the manifests I send to Apple to only include information about files that had the partial digests I discussed earlier, as only files that have partial digests are relevant for SHSH.
+
+However, the APTicket signs complete digests, not partial digests, and so even descriptions of files that do not have partial digests need to be sent to TSS to get a complete ticket. What really should therefore be used as a filter is &#8220;files with digest information at all&#8221;, not just those that have partial digests (there is never a partial digest without a full digest), effectively finding all &#8220;real&#8221; files.
+
+The result is that the APTickets that were downloaded and saved by Cydia itself are not sufficient to boot a device. However, tickets that were downloaded or otherwise obtained by tools such as redsn0w, iFaith, or TinyUmbrella, will work fine. If those tickets are uploaded to Cydia and then downloaded back, they also will continue to work: it is only tickets downloaded by Cydia clients themselves that were affected.
+</div>
+
+
+
+
+<div class="tldr">
+We did an oopsie and the apticket data was not complete.
+</div>
+
+
+<h2>Why did no one notice this?</h2>
+
+<div class="original">
+As stated before, my knowledge of APTickets has been entirely relegated to what I am told by the people who build tools that use APTickets: when APTickets were introduced, I assumed my service would simply become obsolete, but then extended the service at request of other developers as it seemed like it could still provide some benefit to the community (although increasingly less and less, it seems).
+
+Meanwhile, all of the people who build tools that use APTickets also build tools that download APTickets. It therefore happened that developers such as MuscleNerd and iH8sn0w do not personally test their tools against data saved for users by Cydia&#8217;s TSS client. As for myself, I&#8217;ve never actually used an APTicket as a user: until writing this article, I did not even know in what situations they were usable.
+
+Still, iOS 6 has been out for months, and one would have expected that some users would have noticed the problem. However, given the complex limitations that we have on our usage of APTickets, many users (even in larger discussions on sites like JailbreakQA) believed themselves to be misusing the tools, or simply thought the tools needed to be updated, and so seemingly never reported the issues.
+
+Finally, there simply hasn&#8217;t been much reason for users to attempt to use any of the TSS information for iOS 6 during these months: for the entire release cycle of iOS 6.0, there was no untethered jailbreak available, so people mostly wished to use TSS to downgrade to iOS 5. Then, until a few weeks ago, iOS 6 had an untethered jailbreak available, so people did not need to restore or downgrade: they would just restore.
+
+Thankfully, I have been told by MuscleNerd that changes have been made to redsn0w to make any similar situation we may potentially run into in the future (where the manifest information being used by our tools differs, causing Cydia to save unusable information) something that will be noticed while the signing window is still open (in fact, he believes the very first day), allowing things to be corrected.
+</div>
+
+
+
+
+<div class="tldr">
+No one really needed a downgrade nor any exploit was public yet.
+</div>
+
+
+<h2>What does this mean for me now?</h2>
+
+<div class="original">
+Honestly, due to the various limitations on the exploits we have for the reuse of APTickets, not many users are affected by this issue. First, if you have a recent device, iOS 6 APTickets are entirely useless: you cannot use them to downgrade, you cannot use them to upgrade, you cannot even use them to just restore the version of iOS you are currently running; cached responses for iOS 5 are of general interest, not iOS 6.
+
+The set of devices that are able to run iOS 6 and that are also old enough to be subject to this exploit is actually fairly small: only the iPhone 3G[S], iPhone 4, and the 4th generation iPod touch meet these requirements. In particular, no iPad, nor any recent iPhone (not even the iPhone 4S) has any known way to use cached iOS 6 TSS information. This means that 74.2% of Cydia users are not affected at all.
+
+Secondly, for the remaining 25.8% of Cydia users for which cached iOS 6 APTickets could be useful, by far the primary purpose is to restore or otherwise recover the version of iOS you are currently running untethered. As an example, a user is currently running 6.1.2 and accidentally upgrades to 6.1.3. Alternatively, they accidentally break their iOS installation so badly that they need to restore.
+
+In either of these two use cases, the alternative to an APTicket exploit is to upgrade to iOS 6.1.3; as this scenario is only applicable to people running older devices (those subject to limera1n), iOS 6.1.3 is still jailbreakable (as should all future versions of iOS on these devices), but the result will not be an untethered jailbreak: many users (including myself) really hate using tethered jailbreaks.
+
+Thankfully, this situation is actually fairly easily solved: redsn0w has the ability to dump the full TSS information from a device (also using that same limera1n exploit). I thereby encourage users of devices capable of being exploited by limera1n (the iPhone 3G[S], iPhone 4, or 4th generation iPod touch) to download this tool right now and use it to upload complete TSS information.
+</div>
+
+
+
+
+<div class="tldr">
+Blobs are useless for almost everyone because there has not been a new downgrade exploit in about year.
+</div>
+
+
+
+
+<div class="original">
+Note: I have been told by MuscleNerd that there is a minor issue in the current version of redsn0w that will cause blobs retrieved from the device to not be uploaded to Cydia&#8217;s servers. He had intended to get a new version out by the time he had to leave for HITBSecConf2013 (an international security conference at which evad3rs is giving a presentation about evasi0n), but schedules did not permit this. I had then hoped that this new version of redsn0w could be released before this article, but due to the longer delay I have decided that this information needed to be released sooner.
+Using the currently released version of redsn0w will still (as far as I understand) copy the active TSS data from your device and store them locally on your computer. It is then my understanding that redsn0w will be able to upload this information at a later time from your computer. Alternatively, there is a program called iFaith, developed by iH8sn0w, that can be used to immediately upload your TSS information; however, this program is only available for Windows (so users of OS X will definitely have to wait until the new version of redsn0w is available).
+</div>
+
+</div>
+  
+  
+
+
     </article>
-  {% endfor %}
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/04/01/thoughts-on-comexs-substitute/">Thoughts on Comex&#8217;s Substitute</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-04-01T06:30:00+00:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class="original">
+(For some context, as a lot of people end up posting my long responses to places where I didn&#8217;t originally post them: today, comex announced and released on GitHub a pre-alpha implementation of Substitute, a project that is designed to replace my Substrate. He is doing this because iMods, a project to build a more-closed ecosystem, is aiming to replace Cydia, and for this to happen they need their own implementation of Substrate, the only key project I develop which is closed source.)
+</div>
+
+
+<h2>Open Hardware, not Software</h2>
+
+<div class="original">
+So, an interesting aspect of my overall &#8220;mission&#8221; is that I consider &#8220;open source&#8221; to be an increasingly short-term game: it is an issue that only exists right now because binaries are relatively inscrutable and unmodifiable. Substrate itself is designed to undermine these restrictions: it allows developers to make the kinds of changes that &#8220;classically&#8221; require source code. In general, I also believe the algorithms for reverse engineering have started getting better faster than the technology behind binary obfuscation.
+
+(As a demonstration of this: do not for a second believe that comex is not able to just read through Substrate as if it were open source. I know that I would only have mild difficulty doing this, and comex is much better at this kind of work than I am. In Substitute&#8217;s unrestrict.c, he claims Substrate might have a bug: I don&#8217;t think he&#8217;s right, but the issue comes down to the analysis of multi-process interaction, a sufficiently subtle point that makes it very clear that comex &#8220;read the code&#8221; for MSUnrestrictProcess.
+
+Other parts of the code for Substitute also have comments about duplicating functionality for things that Substrate is doing, things that are not open source. At some point in the not-too-distant future, I believe that we will find the distinction between closed source and open source crumbling—not just for people like comex and myself, but for the average developer—a point I made in one of the best talks I&#8217;ve ever given, a five minute &#8220;Ignite&#8221; talk at Foo Camp 2010. If anyone is bored, it is only five minutes ;P.)
+</div>
+
+
+
+
+<div class="tldr">
+So here I fail to properly describe Open Source in three paragraphs.
+</div>
+
+
+
+
+<div class="original">
+My mission has thereby concentrated on fighting for open hardware and, in general, open platforms. I use software licensing as a weapon in that war. (BTW, playing this kind of &#8220;long game&#8221; is also something Stallman does: he advocated for Ogg Vorbis to use a BSD-styled license rather than GPL because he thought it more important to undermine MP3—for which patent restrictions make it difficult to even use in open source software—than to guarantee that the good implementations of Ogg will always be open.)
+</div>
+
+
+
+
+<div class="tldr">
+My mission is to make open hardware because software isn&#8217;t enough. BTW, Stallman is a saint.
+</div>
+
+
+<h2>One Case Study: ldid</h2>
+
+<div class="original">
+My first open source project that was core to this community is actually an interesting case study in this war: a couple core members of the original group of jailbreakers were tied to the interests of RiPDev&#8217;s Installer (who had employed them), and their business model was to sell apps (note: not extensions, apps, which was the focus at the time). Their strategy was to have the jailbreak locked down in a way that would require apps go through them, potentially using Apple&#8217;s own codesign signature mechanism.
+
+At the time, the understanding behind codesign was a guarded secret, and the one tool for &#8220;pseudo-signing&#8221; new executables was to be closed source. I made it my job to, without learning anything from them, write a tool that parsed and updated those segments and to release it as open source. There was seriously an argument I had with some people where they were pissed at me for having released that knowledge to the community, because they had intended it to be restricted to them.
+
+To be clear: I wasn&#8217;t the only person on the team arguing, and this wasn&#8217;t the only part of that battle. Their timeline for controlling codesign was really tight, and they were cutting corners, which meant that knowledge of pseudo-sign played a large part, but it is also important to point out that others on the core jailbreak team were also &#8220;on my side&#8221;, which is why the timeline was so tight and why so many corners had to be cut. ldid being open source was simply &#8220;the nail in the coffin&#8221; for this particular effort.
+</div>
+
+
+
+
+<div class="tldr">
+Fuck old competitors. Here I complain about something old because anecdotes are cool
+</div>
+
+
+
+
+<div class="original">
+When I built Cydia, I embraced the community of third-party sources, putting them front-and-center to the experience, something that I have continually pushed further (such as with the new Sources interface released last year, which pulls that feature out of the depths of the UI and forces users to experience the concept). This is how I think about platforms: when I have had control over something, I use that control to build an egalitarian base for other people to build their own kingdoms.
+</div>
+
+
+
+
+<div class="tldr">
+I made Cydia because third party sources are needed
+</div>
+
+
+<h2>Open Source is not Enough</h2>
+
+<div class="original">
+Which then brings us to why Substrate has been closed source, and why that is also to me a weapon in the same battle. This starts from a simple premise: that open source software merely existing does not lead to open platforms, as the priority of the vast majority of users align with short-term interests (for various reasons, some good and some bad) and so they will happily buy into and empower closed platforms in order to get a relatively small amount of functionality, comfort, or glitter (see iOS itself ;P).
+
+When I started working on Substrate, I still had what I now consider to be a fundamentally flawed model for the goal of open source: all of my software was released under BSD licenses, and I regularly had arguments with Brian Fox (a friend of mine, and first employee of the Free Software Foundation) about how I considered GPL to be an awkward&#8230; even a &#8220;corrupting&#8221;&#8230; force, and would use examples such as gcc being crippled, seemingly on purpose, with respect to being able to export syntax trees.
+
+The overall mistake I tended to make was to not look at the &#8220;long term&#8221; consequences of these licensing decisions: I was instead looking at it from a perspective of &#8220;making my knowledge as available as possible to everyone is always a good thing&#8221;. The obvious next place for this thought process is of course GPL: to trade some short-term freedoms (for developers to build it into closed-source software) for the long-term guarantee that the source code will always be open and that it can always be modified.
+</div>
+
+
+
+
+<div class="tldr">
+Open Source is not Enough because third party sources
+</div>
+
+
+
+
+<div class="original">
+So, now we look at Substrate: why do I keep it closed source? It clearly isn&#8217;t that I like closed source, as almost all of my other key projects (Cydia, WinterBoard, Cydget, Veency, ldid) are open. It isn&#8217;t possible to paint me as someone who is against things being open (and comex thankfully did not try this): I even have a good &#8220;batting average&#8221; on having software that not only was open but continues to be open as compared to other key developers in the ecosystem (DHowett, rpetrich, BigBoss, limneos, &#8230;).
+</div>
+
+
+
+
+<div class="tldr">
+I made Cydia Substrate closed Source because third party sources
+</div>
+
+
+<h2>Rock Your Phone 1.0</h2>
+
+<div class="original">
+The central reason is that we have already seen others come in and use an embrace-and-extend strategy on Substrate in order to build a totally-closed ecosystem: that was Rock Your Phone, with their Rock Extensions. People always think back to Rock 2.0, which was a reasonable &#8220;Cydia competitor&#8221; that supported APT repositories; but the mission of Rock 1.0 was to build a siloed, commercial-first (if not even commercial-only: I was told by them I should sell Cycorder, which had been free) store.
+
+The reason why Rock got forced to support APT repositories (which became Rock 2.0) was that iOS 3.1 required some major reimplementation work on Substrate, and I made the project closed source. This meant that for Rock&#8217;s software to operate, they needed access to a legitimate copy of Substrate, and their strategy for doing that was to support APT repositories and then just download it in the same manner as Cydia. A world where Rock 1.0 became the core ecosystem would be a world very unlike the one we have.
+</div>
+
+
+
+
+<div class="tldr">
+Rock was evil
+</div>
+
+
+<h2>Importance of Mobile</h2>
+
+<div class="original">
+I can totally appreciate the comments about non-mobile platforms (and am intending to do more there), but frankly: setting the strategy on non-mobile platforms is missing the lesson from Wayne Gretzky, who would always say &#8220;I skate to where the puck is going to be, not where it has been.&#8221;. We are just about at the point (which is conservative on my part: we may already be there) where tablet sales have surpassed laptops. It is really sad to look at short-term benefits when we have serious long-term issues to deal with.
+</div>
+
+
+
+
+<div class="tldr">
+Substrate on Mac would be useless because tablet sales surpassed laptops
+</div>
+
+
+
+
+<div class="original">
+In a way even more important than their sheer sales numbers, however, is that the &#8220;war&#8221; over whether computing—hardware, not software—will be open or closed is being waged on these mobile devices, not on laptops and PCs. When we lose the war for open tablets, to the extent to which laptops still exist we will see a major—if not even sudden—shift on those platforms, but for now the only reason we are seeing laptops becoming more closed over time is due to the way this is playing out on tablets and phones.
+</div>
+
+
+
+
+<div class="tldr">
+It&#8217;s more important to fight against corporations than to let people make tweaks
+</div>
+
+
+
+
+<div class="original">
+(Which brings me to a side point: the paragraph from comex about why he refused to cooperate with me on Substrate in the kernel makes me really angry. It is essentially him saying that he doesn&#8217;t believe that cooperation is valuable because of what I find to be a very selfish analysis of who would benefit from the existence of that work. I, for example, wanted Substrate in the kernel for me, I know others who have as well, and on Android I was even doing some similar work recently: work I haven&#8217;t yet done a write up for.)
+</div>
+
+
+
+
+<div class="tldr">
+I&#8217;m really angry
+</div>
+
+
+<h2>Closed Platforms are Bad</h2>
+
+<div class="original">
+A funny thing about all of this is that, in fact, surprisingly few people are somehow (I say &#8220;somehow&#8221;, as I find it surprising sometimes) in a position to build something like Substrate. Whenever iMods has claimed they were going to find someone to work on a replacement for Substrate, I&#8217;ve put together a little list in my head of the people who could do it and why they would likely not work on it; what I had failed to realize for comex, though, is that I generally think of him as being uninterested in all this stuff.
+
+The awkward-to-me result is that we now see comex—someone who talks a lot about open systems—building tools for people who are specifically against the idea of open platforms: who talk a lot about commercialization, strong DRM to defeat piracy, and how allowing third-party repositories outside the centralized, curated experience would fundamentally undermine what they consider required to build a clean experience. comex is now working for the very ideas I thought we wanted to defeat.
+
+This makes me really disappointed, and this isn&#8217;t something I can fix. Essentially, this undermines the strategy that I&#8217;ve had in my head for what this community was doing, and why it mattered in the greater picture. I don&#8217;t do this because I want people to have funny features on their phones: I do this because we are fighting a battle against companies—not just companies like Apple, but companies like Rock Your Phone and iMods—who want to see &#8220;open&#8221; be traded away for &#8220;ease of use&#8221; or &#8220;profitability&#8221;.
+</div>
+
+
+
+
+<div class="tldr">
+I didn&#8217;t expect comex to do this, also he&#8217;s evil because iMods is evil
+</div>
+
+
+<h2>What This Means Now</h2>
+
+<div class="original">
+So, I don&#8217;t really know what to do. I really can&#8217;t get into a massive long-term argument with comex: I almost left the community before (years ago) because of comex (during the time when we were all having arguments over the deployment of unionfs), and I just don&#8217;t have it in me anymore to &#8220;fight&#8221; (not that there&#8217;s anything that could really be done) against people whom I thought were &#8220;on my side&#8221;. (I thereby do not address this to comex, and don&#8217;t entirely care what his response to what I&#8217;m writing is.)
+</div>
+
+
+
+
+<div class="tldr">
+I am a kid on YouTube who wins an argument by not replying.
+</div>
+
+
+
+
+<div class="original">
+Right now, we are in the middle of an DMCA exemption comment period. In the next day or two, Britta and I are going to be launching some documentation and a small campaign related to this. I promise to everyone that I will continue to be part of things through the end of this DMCA exemption cycle. This push is going to come with some style updates to Cydia&#8217;s home page, so you will see those changes, and there are a couple payment related things that are &#8220;almost done&#8221; which will happen in the near future.
+</div>
+
+
+
+
+<div class="tldr">
+Irrelevant thing about the DMCA thing because pathos
+</div>
+
+
+
+
+<div class="original">
+I also have some changes I was working on to Substrate (a different way of loading and filtering that is finally ready, that will come with an easier-to-use SDK) that will probably be released. We will see if it makes sense for me to continue bothering. I am, in all honestly, really tired of fighting and arguing with people who don&#8217;t see the end game. I spend way too much of my time burning myself out on reddit and IRC trying to get people to &#8220;understand&#8221;, and it has driven me at times to the brink of insanity.
+</div>
+
+
+
+
+<div class="tldr">
+I am not going to do much now that iMods and Substitute exist because other people playing in the sandbox with me is disgusting and must be stopped.
+</div>
+
+
+
+
+<div class="original">
+The key thing I think I&#8217;m going to do is &#8220;retract&#8221; somewhat: while you are probably all quite used to me being active on places like /r/jailbreak, having to deal with the escalating comments from a few posters there about iMods (especially some of the recent stuff, largely due to coolstar&#8217;s Anemone, a monolithic replacement for the WinterBoard ecosystem, also due to iMods) really took a toll on me, and the return of comex is much more than I can mentally handle.
+</div>
+
+
+
+
+<div class="tldr">
+I will not use reddit because all I do is complain about how this cannot be added into Cydia because Cydia is not a store even though it is but hey FUCK COOLSTAR!!!!
+</div>
+
+
+
+
+<div class="original">
+I will, of course, continue to be available &#8220;behind the scenes&#8221; to the key developers and repositories, but I just don&#8217;t feel like I can continue to directly participate in the public conversations much anymore without it killing me: I&#8217;ve already pulled back some this last month, and it has been really inspiring; but what I really need to do is just stop entirely and let other people handle all of this front-line stuff. (FWIW, I&#8217;m sorry I can&#8217;t do even more: it is painful to realize one&#8217;s limits.)
+</div>
+
+
+
+
+<div class="tldr">
+iMods causes me depression but even though that happens, I WILL TRY MY BEST TO NOT BE A LAZY BUM
+</div>
+
+</div>
+  
+  
+
+
+    </article>
+  
   <div class="pagination">
-    {% if paginator.next_page %}
-      <a class="prev" href="{{paginator.next_page}}"><i class="fa fa-chevron-circle-left fa-2x icon-color"></i></a>
-    {% endif %}
-    {% if paginator.previous_page %}
-    <a class="next" href="{{paginator.previous_page}}"><i class="fa fa-chevron-circle-right fa-2x icon-color icon-homepage"></i></a>
-    {% endif %}
+    
+    
   </div>
 </div>
+
+    </div>
+  </div>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  
+  <aside class="sidebar">
+    
+      <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/04/01/where-did-my-ios-6-tss-data-go/">Where Did My iOS 6 TSS Data Go?</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/01/thoughts-on-comexs-substitute/">Thoughts on Comex&#8217;s Substitute</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+    
+  </aside>
+  
+</body>
+
+
+</html>
